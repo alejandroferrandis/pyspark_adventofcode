@@ -1,14 +1,7 @@
-"""2024 Day 4 -- Ceres Search.  *Spark lesson: modelling a grid as a cell relation.*
+"""2024 Day 4 -- Ceres Search.
 
-Part 1 counts XMAS in all 8 directions; part 2 counts two MAS crossing on a
-shared central A.
-
-The move that makes this tractable in Spark is refusing to treat the grid as a
-grid. Explode it into a `(row, col, char)` relation and every "look in
-direction (dr,dc)" becomes an **equi-join on offset coordinates**. Searching all
-8 directions at once is then a cross join against a 8-row directions table --
-Spark broadcasts it and the whole search is three joins deep regardless of how
-many directions there are.
+The grid is exploded into a (row, col, char) relation, which turns "look in
+direction (dr,dc)" into an equi-join on offset coordinates.
 """
 
 from __future__ import annotations
@@ -21,24 +14,19 @@ WORD = "XMAS"
 
 
 def cells(spark: SparkSession, data: str) -> DataFrame:
-    """Grid -> one row per character: (r, c, ch)."""
     lines = [(r, line) for r, line in enumerate(data.strip().splitlines())]
     rows = spark.createDataFrame(lines, "r INT, line STRING")
     return (
         rows.select("r", F.posexplode(F.split(F.col("line"), "")).alias("c", "ch"))
-        # split(s, "") yields a trailing empty string; drop it.
+        # split(s, "") emits a trailing empty string.
         .filter(F.col("ch") != "")
     )
 
 
 def part1(spark: SparkSession, data: str) -> int:
-    """Count XMAS in all 8 directions.
-
-    Start from every X paired with every direction, then join once per
-    remaining letter, stepping (dr,dc) further each time. A surviving row is a
-    complete match.
-    """
     grid = cells(spark, data).cache()
+    # Directions as data, not control flow: the search stays 3 joins deep
+    # regardless of how many there are.
     directions = spark.createDataFrame(DIRECTIONS, "dr INT, dc INT")
 
     matches = grid.filter(F.col("ch") == WORD[0]).select("r", "c").crossJoin(directions)
@@ -59,11 +47,6 @@ def part1(spark: SparkSession, data: str) -> int:
 
 
 def part2(spark: SparkSession, data: str) -> int:
-    """Count X-MAS: two MAS crossing diagonally on a shared central A.
-
-    Join each A to its four diagonal neighbours, then require each diagonal to
-    read M/S in either order.
-    """
     grid = cells(spark, data).cache()
     centres = grid.filter(F.col("ch") == "A").select(
         F.col("r").alias("ar"), F.col("c").alias("ac")

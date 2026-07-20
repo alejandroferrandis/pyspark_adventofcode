@@ -1,14 +1,9 @@
-"""Generate the day notebooks from a single content spec.
+"""Generate the day notebooks from one content spec.
 
-Notebooks are generated rather than hand-written so that five of them stay
-structurally consistent, and so adding day 6 is an edit here rather than a
-copy-paste of JSON. The solution *code* is never duplicated into the notebook
--- the notebook imports `aoc_spark.y2024.dayNN`, so what you read in the
-notebook is what the tests cover.
+Notebooks import `aoc_spark.y2024.dayNN` rather than inlining it, so the
+walkthroughs cannot drift from the tested code.
 
-    python scripts/build_notebooks.py
-
-Regenerating overwrites notebooks/*.ipynb, so do exploratory edits in a copy.
+Regenerating overwrites notebooks/*.ipynb -- do exploratory edits in a copy.
 """
 
 from __future__ import annotations

@@ -1,14 +1,9 @@
-"""Run every implemented day against the real puzzle input and time it.
+"""Run each implemented day against the real input and print JSON.
 
-Prints JSON so it can be diffed against another implementation's answers --
-the point of this repo is that the PySpark rewrites must agree with the plain
-Python ones in `airflow_adventofcode`.
+    python scripts/verify.py          # all days
+    python scripts/verify.py 1 3 5    # selected
 
-    python scripts/verify.py            # all implemented days
-    python scripts/verify.py 1 3 5      # selected days
-
-Requires a reachable Spark Connect endpoint (scripts/port-forward.sh) and the
-input cache (scripts/pull_inputs_from_pg.sh).
+Needs Spark Connect reachable and the input cache populated.
 """
 
 from __future__ import annotations

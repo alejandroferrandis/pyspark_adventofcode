@@ -1,9 +1,6 @@
-"""Unit tests for 2024 days 1-5 using AoC's *published examples* (safe to commit).
+"""Tests for 2024 days 1-5 against AoC's published examples.
 
-Never commit your real puzzle input -- those are per-user and AoC asks that they
-stay private. Real inputs live in `inputs/` (gitignored) and Postgres.
-
-Expected values are the ones stated in each puzzle's worked example.
+Real inputs are per-user and stay out of git; they live in `inputs/`.
 """
 
 from __future__ import annotations

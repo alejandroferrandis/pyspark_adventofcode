@@ -1,15 +1,6 @@
-"""Cache-first puzzle input loading.
+"""Cache-first puzzle input loading: local file -> Postgres -> adventofcode.com.
 
-Resolution order, cheapest and most private first:
-
-  1. local file  ``inputs/<year>/day<NN>.txt``  -- gitignored, never committed
-  2. Postgres    ``adventofcode.y<year>.input_data`` -- the shared homelab cache
-  3. adventofcode.com -- only on a full miss, then written back to (1) and (2)
-
-Step 3 is deliberately last. AoC's automation guidelines ask that inputs are
-fetched **once** and cached; hammering the site is how people get blocked.
-
-Nothing here logs the session cookie or the input text.
+The network is last on purpose; AoC asks that inputs be fetched once and cached.
 """
 
 from __future__ import annotations
@@ -21,18 +12,16 @@ from pathlib import Path
 
 BASE = "https://adventofcode.com"
 
-# AoC asks automated clients to identify themselves.
 USER_AGENT = os.environ.get(
     "AOC_USER_AGENT",
     "github.com/alejandroferrandis/pyspark_adventofcode by alejandro.ferrandis@marvalanalytics.com",
 )
 
-# Repo root -> inputs/ lives beside the package, not inside it.
 CACHE_ROOT = Path(os.environ.get("AOC_CACHE_DIR", Path(__file__).resolve().parent.parent / "inputs"))
 
 
 class AoCError(RuntimeError):
-    """Raised when input cannot be resolved from any source."""
+    """Input could not be resolved from any source."""
 
 
 def _cache_path(year: int, day: int) -> Path:
@@ -51,11 +40,7 @@ def _to_file(year: int, day: int, text: str) -> None:
 
 
 def _pg_dsn() -> str | None:
-    """Build a DSN from env, or None when Postgres isn't configured.
-
-    Set AOC_PG_DSN (or the standard PG* vars) to enable the shared cache. No
-    credentials are stored in this repo.
-    """
+    """DSN from AOC_PG_DSN or the standard PG* vars, or None if unconfigured."""
     dsn = os.environ.get("AOC_PG_DSN")
     if dsn:
         return dsn
@@ -82,7 +67,7 @@ def _from_postgres(year: int, day: int) -> str | None:
             cur.execute(f"SELECT input_text FROM y{year}.input_data WHERE day = %s", (day,))
             row = cur.fetchone()
             return row[0] if row else None
-    except Exception:  # noqa: BLE001 - cache miss must never break the notebook
+    except Exception:  # noqa: BLE001 - a cache miss must not break the notebook
         return None
 
 
@@ -90,8 +75,7 @@ def _from_aoc(year: int, day: int) -> str:
     session = os.environ.get("AOC_SESSION")
     if not session:
         raise AoCError(
-            f"{year} day {day} not in local or Postgres cache, and AOC_SESSION is unset "
-            "(expected from the k8s Secret 'aoc-session')"
+            f"{year} day {day} not in local or Postgres cache, and AOC_SESSION is unset"
         )
     req = urllib.request.Request(
         f"{BASE}/{year}/day/{day}/input",
@@ -100,14 +84,13 @@ def _from_aoc(year: int, day: int) -> str:
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:  # noqa: S310 - trusted host
             return resp.read().decode()
-    except urllib.error.HTTPError as exc:  # 400 = bad/expired cookie, 404 = not live yet
+    except urllib.error.HTTPError as exc:  # 400 = bad cookie, 404 = not live yet
         raise AoCError(f"AoC returned HTTP {exc.code} for {year} day {day}") from exc
     except urllib.error.URLError as exc:
         raise AoCError(f"could not reach adventofcode.com: {exc.reason}") from exc
 
 
 def get_input(year: int, day: int) -> str:
-    """Return the raw puzzle input, consulting caches before the network."""
     text = _from_file(year, day)
     if text is not None:
         return text
