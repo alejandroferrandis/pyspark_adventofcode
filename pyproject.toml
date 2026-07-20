@@ -1,0 +1,39 @@
+[project]
+name = "pyspark-adventofcode"
+version = "0.1.0"
+description = "Advent of Code solved with PySpark on the homelab Spark Connect cluster"
+requires-python = ">=3.11"
+dependencies = [
+    "pyspark[connect]==4.1.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "nbclient>=0.10",
+    "nbformat>=5.10",
+    "ipykernel>=6",
+    "ruff>=0.6",
+]
+# Only needed if you want the Postgres tier of the input cache.
+postgres = ["psycopg2-binary>=2.9"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["aoc_spark*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Spark Connect's unpartitioned-window warning is expected and explained in the
+# day 1 and day 3 notebooks; don't let it clutter the run.
+filterwarnings = ["ignore::UserWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]

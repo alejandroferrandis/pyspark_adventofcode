@@ -1,0 +1,27 @@
+# --- SECRETS / puzzle inputs: never commit --------------------------------
+# AoC asks that per-user puzzle inputs stay private, and the puzzle text is
+# Eric Wastl's copyrighted prose. Inputs are cached locally (and in Postgres),
+# never in git. These patterns are a defensive backstop.
+.env
+*.session
+inputs/
+**/input.txt
+**/*.input
+
+# Notebook outputs can contain real puzzle input and real answers.
+# Strip them before committing: `make clean-nb` (nbconvert --clear-output).
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Packaging artifacts
+*.egg-info/
+build/
+dist/
