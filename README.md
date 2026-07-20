@@ -66,7 +66,8 @@ reference_python/
   y2024/
     day06.py .. day20.py   # independent plain-Python cross-check: part1(data)
 notebooks/
-  2024-dayNN-*.ipynb  # days 1-5: puzzle summary + example + walkthrough + real answer
+  2024-dayNN-*.ipynb  # puzzle summary + example + walkthrough + real answer
+                      # days 6-20 are part 1 only, and end with a cross-check cell
 tests/
   test_y2024.py       # days 1-5, both parts
   test_dayNN.py       # days 6-20, both implementations vs the published example
@@ -75,8 +76,15 @@ scripts/
   pull_inputs_from_pg.sh  # populate the local input cache from Postgres
   verify.py               # run every day against the real input, print JSON
   crosscheck.py           # assert both implementations agree on the real input
-  build_notebooks.py      # regenerate notebooks/ from one content spec
+  build_notebooks.py      # regenerate notebooks/ from the per-day specs
+  build_examples.py       # regenerate _examples.py from the tests, verifying each
+  specs/dayNN.py          # per-day notebook prose (title, approach, gotchas)
 ```
+
+`scripts/_examples.py` is generated, never hand-edited: `build_examples.py` reads each
+example out of its test module, re-runs both implementations against it, and refuses to
+write unless all 15 match. That is what stops a notebook from displaying example data the
+test suite doesn't actually assert on.
 
 Solutions take `(spark, data)` and return the answer. Keeping them out of the notebooks
 means the notebooks import exactly what the tests cover — the walkthrough can't drift
